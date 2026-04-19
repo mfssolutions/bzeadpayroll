@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -83,6 +84,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 const App = () => {
   return (
     <AuthProvider>
+      <CurrencyProvider>
       <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
@@ -132,6 +134,7 @@ const App = () => {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </CurrencyProvider>
       <Toaster
         position="top-right"
         toastOptions={{

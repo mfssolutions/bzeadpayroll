@@ -1,9 +1,9 @@
-export const formatCurrency = (amount) => {
+export const formatCurrency = (amount, currency = 'GBP') => {
   const num = Number(amount) || 0;
-  return '₹' + num.toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  if (currency === 'INR') {
+    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return '£' + num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 export const formatDate = (dateStr) => {
@@ -46,9 +46,12 @@ export const getYearRange = () => {
   return [currentYear - 1, currentYear, currentYear + 1];
 };
 
-export const generateEmployeeId = (lastId) => {
-  const nextNum = (lastId || 0) + 1;
-  return `EMP-${String(nextNum).padStart(4, '0')}`;
+export const generateEmployeeId = (companyCode, existingCount) => {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const seq = String((existingCount || 0) + 1).padStart(4, '0');
+  return `${companyCode || 'BZD'}${mm}${yy}${seq}`;
 };
 
 export const convertNumberToWords = (num) => {
@@ -70,14 +73,11 @@ export const convertNumberToWords = (num) => {
   const abs = Math.abs(Math.floor(num));
   let result = '';
 
-  if (abs >= 10000000) {
-    result += numToWords(Math.floor(abs / 10000000)) + ' Crore ';
-  }
-  if (abs >= 100000) {
-    result += numToWords(Math.floor((abs % 10000000) / 100000)) + ' Lakh ';
+  if (abs >= 1000000) {
+    result += numToWords(Math.floor(abs / 1000000)) + ' Million ';
   }
   if (abs >= 1000) {
-    result += numToWords(Math.floor((abs % 100000) / 1000)) + ' Thousand ';
+    result += numToWords(Math.floor((abs % 1000000) / 1000)) + ' Thousand ';
   }
   if (abs % 1000 > 0) {
     result += numToWords(abs % 1000);

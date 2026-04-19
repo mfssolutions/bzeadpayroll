@@ -3,7 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
 import Modal from '../../components/ui/Modal';
-import { formatCurrency, MONTHS, calculatePayroll, getYearRange } from '../../utils/helpers';
+import { MONTHS, calculatePayroll, getYearRange } from '../../utils/helpers';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
 import toast from 'react-hot-toast';
 import { Bar } from 'react-chartjs-2';
@@ -11,6 +12,7 @@ import { Bar } from 'react-chartjs-2';
 const Payroll = () => {
   const { profile } = useAuth();
   const { settings } = useCompanySettings();
+  const { formatCurrency } = useCurrency();
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -27,7 +29,7 @@ const Payroll = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('payroll')
-      .select('*, employees(first_name, last_name, employee_id, department, designation, bank_account, pan_no)')
+      .select('*, employees(first_name, last_name, employee_id, department, designation, bank_account, ni_number)')
       .eq('year', selectedYear)
       .order('created_at', { ascending: false });
 

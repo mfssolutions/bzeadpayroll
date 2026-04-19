@@ -3,12 +3,14 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
 import Modal from '../../components/ui/Modal';
-import { formatCurrency, MONTHS, convertNumberToWords, getYearRange } from '../../utils/helpers';
+import { MONTHS, convertNumberToWords, getYearRange } from '../../utils/helpers';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
 
 const Payslips = () => {
   const { profile } = useAuth();
   const { settings } = useCompanySettings();
+  const { formatCurrency } = useCurrency();
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -133,7 +135,7 @@ const Payslips = () => {
               <div><span className="text-gray-500">Name:</span><br /><strong>{profile?.first_name} {profile?.last_name}</strong></div>
               <div><span className="text-gray-500">Department:</span><br /><strong>{profile?.department}</strong></div>
               <div><span className="text-gray-500">Designation:</span><br /><strong>{profile?.designation}</strong></div>
-              <div><span className="text-gray-500">PAN:</span><br /><strong>{profile?.pan_no || 'N/A'}</strong></div>
+              <div><span className="text-gray-500">NI Number:</span><br /><strong>{profile?.ni_number || 'N/A'}</strong></div>
               <div><span className="text-gray-500">Bank Account:</span><br /><strong>{profile?.bank_account || 'N/A'}</strong></div>
               <div><span className="text-gray-500">Month/Year:</span><br /><strong>{payslipModal.payslip.month} {payslipModal.payslip.year}</strong></div>
               <div><span className="text-gray-500">Status:</span><br /><strong>{payslipModal.payslip.status}</strong></div>
@@ -171,7 +173,7 @@ const Payslips = () => {
             <div className="bg-green-50 rounded-lg p-4 text-center">
               <span className="text-gray-600 text-sm">Net Salary</span>
               <p className="text-3xl font-bold text-green-700">{formatCurrency(payslipModal.payslip.net_salary)}</p>
-              <p className="text-sm text-gray-500 mt-1">Rupees {convertNumberToWords(Math.floor(Number(payslipModal.payslip.net_salary)))} Only</p>
+              <p className="text-sm text-gray-500 mt-1">Pounds {convertNumberToWords(Math.floor(Number(payslipModal.payslip.net_salary)))} Only</p>
             </div>
 
             <div className="flex justify-between text-xs text-gray-400 border-t pt-2">

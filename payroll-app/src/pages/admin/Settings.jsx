@@ -91,7 +91,7 @@ const Settings = () => {
   );
 
   const renderCompany = () => {
-    const keys = ['company_name', 'company_email', 'company_phone', 'company_website', 'gst_number', 'pan_number', 'company_address', 'departments'];
+    const keys = ['company_name', 'company_email', 'company_phone', 'company_website', 'company_registration', 'vat_number', 'company_address', 'departments'];
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -99,8 +99,8 @@ const Settings = () => {
           {renderInput('company_email', 'Company Email', 'email')}
           {renderInput('company_phone', 'Company Phone')}
           {renderInput('company_website', 'Company Website')}
-          {renderInput('gst_number', 'GST Number')}
-          {renderInput('pan_number', 'PAN Number')}
+          {renderInput('company_registration', 'Company Registration No')}
+          {renderInput('vat_number', 'VAT Number')}
         </div>
         {renderInput('company_address', 'Company Address', 'textarea')}
         {renderInput('departments', 'Departments (JSON array, e.g. ["Engineering","HR"])')}

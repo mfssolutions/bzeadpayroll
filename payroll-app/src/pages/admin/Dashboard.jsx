@@ -5,10 +5,12 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
-import { formatCurrency, formatDate } from '../../utils/helpers';
+import { formatDate } from '../../utils/helpers';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

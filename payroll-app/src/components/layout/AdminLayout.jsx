@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import CurrencyToggle from '../ui/CurrencyToggle';
 
 const navLinks = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: 'fa-tachometer-alt' },
@@ -132,6 +133,7 @@ const AdminLayout = () => {
             </div>
 
             <div className="flex items-center gap-4">
+              <CurrencyToggle />
               <span className="hidden sm:block text-sm text-red-100">
                 Welcome, {adminName}
               </span>

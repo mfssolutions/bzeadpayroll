@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
-import { formatCurrency, MONTHS } from '../../utils/helpers';
+import { MONTHS } from '../../utils/helpers';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [stats, setStats] = useState({ salary: 0, presentDays: 0, availableLeaves: 0, pendingLeaves: 0 });
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [attendanceTrend, setAttendanceTrend] = useState([]);

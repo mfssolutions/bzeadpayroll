@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
-import { formatCurrency, formatDate } from '../../utils/helpers';
+import { formatDate } from '../../utils/helpers';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { user, profile } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editModal, setEditModal] = useState(false);
@@ -152,10 +154,10 @@ const Profile = () => {
               ['Department', employee?.department || 'Not assigned'],
               ['Designation', employee?.designation || 'Not assigned'],
               ['Joining Date', employee?.joining_date ? formatDate(employee.joining_date) : 'Not set'],
-              ['Basic Salary', formatCurrency(employee?.basic_salary)],
+              ['Salary', formatCurrency(employee?.salary_amount || employee?.basic_salary)],
               ['Bank Account', employee?.bank_account || 'Not set'],
-              ['PAN Number', employee?.pan_no || 'Not set'],
-              ['PF Number', employee?.pf_no || 'Not set'],
+              ['NI Number', employee?.ni_number || 'Not set'],
+              ['Passport No', employee?.passport_no || 'Not set'],
             ].map(([label, value]) => (
               <div key={label}>
                 <label className="text-sm text-gray-500">{label}</label>
