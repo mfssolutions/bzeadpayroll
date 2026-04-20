@@ -729,6 +729,9 @@ const Employees = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField
+                  formData={formData}
+                  onChange={handleChange}
+                  errors={errors}
                   label="Login Email"
                   name="email"
                   type="email"
@@ -738,6 +741,9 @@ const Employees = () => {
                 />
                 {!editingEmployee && (
                   <InputField
+                    formData={formData}
+                    onChange={handleChange}
+                    errors={errors}
                     label="Login Password"
                     name="password"
                     type="password"
