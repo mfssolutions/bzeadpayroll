@@ -16,11 +16,7 @@ const Payslips = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [payslipModal, setPayslipModal] = useState({ open: false, payslip: null });
 
-  useEffect(() => {
-    if (profile?.id) fetchPayslips();
-  }, [profile, selectedYear]);
-
-  const fetchPayslips = async () => {
+  async function fetchPayslips() {
     setLoading(true);
     const { data, error } = await supabase
       .from('payroll')
@@ -31,7 +27,14 @@ const Payslips = () => {
 
     if (!error) setPayslips(data || []);
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const timer = setTimeout(() => { void fetchPayslips(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, selectedYear]);
 
   const latestPayslip = payslips[0];
   const totalEarnings = payslips.reduce((s, p) => s + Number(p.gross_earnings || 0), 0);

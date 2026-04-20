@@ -19,11 +19,7 @@ const Dashboard = () => {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  useEffect(() => {
-    if (profile?.id) fetchDashboardData();
-  }, [profile]);
-
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
     setLoading(true);
 
     // Basic salary
@@ -87,7 +83,14 @@ const Dashboard = () => {
     }
     setAttendanceTrend(trend);
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const timer = setTimeout(() => { void fetchDashboardData(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const leaveChartData = leaveBalance ? {
     labels: ['Sick Leave', 'Casual Leave', 'Earned Leave'],

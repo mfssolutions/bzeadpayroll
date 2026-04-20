@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 
 const LandingPage = () => {
+  const { settings } = useCompanySettings();
+  const companyName = settings.company_name || 'Payroll System';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-700 to-red-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl">
@@ -9,7 +13,7 @@ const LandingPage = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4">
             <i className="fa-solid fa-money-check-alt text-white text-3xl"></i>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">BEAUZEAD LTD</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{companyName}</h1>
           <p className="text-red-100 text-lg">Payroll &amp; Record Management System</p>
         </div>
 
@@ -48,7 +52,7 @@ const LandingPage = () => {
 
         {/* Footer */}
         <div className="text-center text-red-200 text-sm">
-          &copy; {new Date().getFullYear()} BEAUZEAD LTD. All rights reserved.
+          &copy; {new Date().getFullYear()} {companyName}. All rights reserved.
         </div>
       </div>
     </div>

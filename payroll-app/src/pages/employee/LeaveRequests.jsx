@@ -20,15 +20,12 @@ const LeaveRequests = () => {
   const [form, setForm] = useState({
     leave_type: 'Sick Leave', from_date: '', to_date: '', reason: '',
   });
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', action: null });
 
-  useEffect(() => {
-    if (profile?.id) {
-      fetchRequests();
-      fetchLeaveBalance();
-    }
-  }, [profile]);
+  const closeConfirmModal = () => setConfirmModal({ open: false, message: '', action: null });
+  const runConfirm = () => { confirmModal.action?.(); closeConfirmModal(); };
 
-  const fetchRequests = async () => {
+  async function fetchRequests() {
     setLoading(true);
     const { data, error } = await supabase
       .from('leave_requests')
@@ -38,18 +35,33 @@ const LeaveRequests = () => {
 
     if (!error) setRequests(data || []);
     setLoading(false);
-  };
+  }
 
-  const fetchLeaveBalance = async () => {
-    const { data } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('employee_id', profile.id)
-      .eq('year', new Date().getFullYear())
-      .single();
+  async function fetchLeaveBalance() {
+    try {
+      const { data, error } = await supabase
+        .from('leave_balances')
+        .select('*')
+        .eq('employee_id', profile.id)
+        .eq('year', new Date().getFullYear())
+        .single();
 
-    setLeaveBalance(data);
-  };
+      if (error) throw error;
+      setLeaveBalance(data);
+    } catch {
+      toast.error('Failed to load leave balance');
+    }
+  }
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const timer = setTimeout(() => {
+      void fetchRequests();
+      void fetchLeaveBalance();
+    }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const calculateDuration = (from, to) => {
     if (!from || !to) return 0;
@@ -90,8 +102,15 @@ const LeaveRequests = () => {
     }
   };
 
-  const deleteRequest = async (id) => {
-    if (!confirm('Delete this leave request?')) return;
+  const deleteRequest = (id) => {
+    setConfirmModal({
+      open: true,
+      message: 'Delete this leave request?',
+      action: () => doDeleteRequest(id),
+    });
+  };
+
+  const doDeleteRequest = async (id) => {
     const { error } = await supabase.from('leave_requests').delete().eq('id', id);
     if (error) {
       toast.error('Error deleting request');
@@ -276,6 +295,15 @@ const LeaveRequests = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <Modal isOpen={confirmModal.open} onClose={closeConfirmModal} title="Confirm" size="sm">
+        <p className="text-gray-700 mb-6">{confirmModal.message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={closeConfirmModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <button onClick={runConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+        </div>
       </Modal>
     </div>
   );

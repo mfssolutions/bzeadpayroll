@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 import CurrencyToggle from '../ui/CurrencyToggle';
 
 const navLinks = [
@@ -22,7 +23,8 @@ const pageTitles = {
 const EmployeeLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { user, profile, role, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const { settings } = useCompanySettings();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -30,10 +32,6 @@ const EmployeeLayout = () => {
   const employeeName = profile?.full_name || user?.email || 'Employee';
   const employeeId = profile?.employee_id || '';
   const designation = profile?.designation || 'Employee';
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -69,7 +67,7 @@ const EmployeeLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-gray-100">
-            <h1 className="text-2xl font-bold text-red-600">BEAUZEAD LTD</h1>
+            <h1 className="text-2xl font-bold text-red-600">{settings.company_name || 'Payroll System'}</h1>
             <p className="text-sm text-gray-500 mt-1">Employee Portal</p>
           </div>
 
@@ -81,6 +79,7 @@ const EmployeeLayout = () => {
                 <Link
                   key={link.path}
                   to={link.path}
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
                     isActive
                       ? 'bg-red-50 text-red-600 font-medium'
@@ -123,7 +122,7 @@ const EmployeeLayout = () => {
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                  onClick={() => setSidebarOpen((prev) => !prev)}
                 className="lg:hidden p-2 rounded-lg hover:bg-red-700 transition-colors"
               >
                 <i className="fas fa-bars text-lg"></i>

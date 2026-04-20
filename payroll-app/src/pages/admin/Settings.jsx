@@ -16,11 +16,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  async function fetchSettings() {
     const { data, error } = await supabase
       .from('company_settings')
       .select('*');
@@ -33,7 +29,12 @@ const Settings = () => {
       setSettings(map);
     }
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchSettings(); }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const updateSetting = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -120,7 +121,7 @@ const Settings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {renderInput('pf_rate', 'PF Rate (%)', 'number')}
           {renderInput('esi_rate', 'ESI Rate (%)', 'number')}
-          {renderInput('professional_tax', 'Professional Tax (₹)', 'number')}
+          {renderInput('professional_tax', 'Professional Tax', 'number')}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Salary Day</label>
             <select
@@ -135,7 +136,7 @@ const Settings = () => {
           </div>
           {renderInput('hra_percentage', 'HRA Percentage (%)', 'number')}
           {renderInput('special_allowance_percentage', 'Special Allowance (%)', 'number')}
-          {renderInput('tds_threshold', 'TDS Threshold (₹)', 'number')}
+          {renderInput('tds_threshold', 'TDS Threshold', 'number')}
           {renderInput('tds_rate', 'TDS Rate (%)', 'number')}
           {renderInput('work_start_time', 'Work Start Time')}
           {renderInput('work_end_time', 'Work End Time')}
@@ -161,7 +162,7 @@ const Settings = () => {
           {renderInput('max_continuous_leave', 'Max Continuous Leave (days)', 'number')}
         </div>
         {renderInput('leave_approval_required', 'Leave Approval Required', 'checkbox')}
-        {renderInput('leave_types', 'Leave Types (JSON array, e.g. [\"Sick Leave\",\"Casual Leave\"])')}
+        {renderInput('leave_types', 'Leave Types (JSON array, e.g. ["Sick Leave","Casual Leave"])')}
         <div className="flex justify-end pt-2">
           <button onClick={() => saveSectionSettings(keys)} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Leave Settings'}

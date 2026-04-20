@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
-import { formatDate } from '../../utils/helpers';
 import { useCurrency } from '../../contexts/CurrencyContext';
 
 const Dashboard = () => {
@@ -26,11 +25,7 @@ const Dashboard = () => {
   const [recentEmployees, setRecentEmployees] = useState([]);
   const [recentLeaves, setRecentLeaves] = useState([]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
@@ -114,13 +109,20 @@ const Dashboard = () => {
 
       setRecentEmployees(recentEmpRes.data || []);
       setRecentLeaves(recentLeavesRes.data || []);
-    } catch (error) {
-      console.error('Dashboard fetch error:', error);
+    } catch {
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchDashboardData();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLeaveAction = async (id, action) => {
     try {
@@ -136,7 +138,7 @@ const Dashboard = () => {
       if (error) throw error;
       toast.success(`Leave request ${action}`);
       fetchDashboardData();
-    } catch (error) {
+    } catch {
       toast.error(`Failed to ${action} leave request`);
     }
   };

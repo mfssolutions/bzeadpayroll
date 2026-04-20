@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import Modal from '../../components/ui/Modal';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
@@ -94,7 +93,7 @@ const initialFormState = {
   city: '',
   county: '',
   postcode: '',
-  country: 'United Kingdom',
+  country: '',
   phone: '',
   personal_email: '',
   // Section 2: Employment & Pay
@@ -111,7 +110,7 @@ const initialFormState = {
   joining_date: '',
   passport_no: '',
   ni_number: '',
-  tax_code: '1257L',
+  tax_code: '',
   starter_declaration: '',
   email: '',
   password: '',
@@ -141,8 +140,7 @@ const validateField = (name, value, formData, isNew) => {
       if (value && !EMAIL_REGEX.test(value)) return 'Enter a valid email address';
       return '';
     case 'ni_number':
-      if (!value || !value.trim()) return 'NI Number is required for UK payroll';
-      if (!NI_REGEX.test(value.replace(/\s/g, ''))) return 'Invalid NI format (e.g. QQ123456A)';
+      if (value && !NI_REGEX.test(value.replace(/\s/g, ''))) return 'Invalid NI format (e.g. QQ123456A)';
       return '';
     case 'passport_no':
       if (value && !PASSPORT_REGEX.test(value)) return 'Invalid passport number format';
@@ -165,7 +163,6 @@ const validateField = (name, value, formData, isNew) => {
 };
 
 const Employees = () => {
-  const { profile } = useAuth();
   const { settings } = useCompanySettings();
   const { formatCurrency } = useCurrency();
   const departments = settings.departments || [];
@@ -178,12 +175,12 @@ const Employees = () => {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSection, setActiveSection] = useState(1);
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', action: null });
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const closeConfirmModal = () => setConfirmModal({ open: false, message: '', action: null });
+  const runConfirm = () => { confirmModal.action?.(); closeConfirmModal(); };
 
-  const fetchEmployees = async () => {
+  async function fetchEmployees() {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -193,17 +190,24 @@ const Employees = () => {
 
       if (error) throw error;
       setEmployees(data || []);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load employees');
-      console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchEmployees();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const openAddModal = () => {
     setEditingEmployee(null);
-    setFormData(initialFormState);
+    setFormData({ ...initialFormState, country: settings.default_country || '', tax_code: settings.default_tax_code || '' });
     setErrors({});
     setActiveSection(1);
     setShowModal(true);
@@ -221,7 +225,7 @@ const Employees = () => {
       city: emp.city || '',
       county: emp.county || '',
       postcode: emp.postcode || '',
-      country: emp.country || 'United Kingdom',
+      country: emp.country || '',
       phone: emp.phone || '',
       personal_email: emp.personal_email || '',
       department: emp.department || '',
@@ -236,7 +240,7 @@ const Employees = () => {
       joining_date: emp.joining_date || '',
       passport_no: emp.passport_no || '',
       ni_number: emp.ni_number || '',
-      tax_code: emp.tax_code || '1257L',
+      tax_code: emp.tax_code || '',
       starter_declaration: emp.starter_declaration || '',
       email: emp.email || '',
       password: '',
@@ -336,7 +340,7 @@ const Employees = () => {
       setSubmitting(true);
 
       if (editingEmployee) {
-        const { password, email, ...updateFields } = formData;
+        const { password: _password, email: _email, ...updateFields } = formData;
         const salaryNum = Number(updateFields.salary_amount) || 0;
         const { error } = await supabase
           .from('employees')
@@ -392,20 +396,26 @@ const Employees = () => {
     } catch (error) {
       const msg = error?.message || (editingEmployee ? 'Failed to update employee' : 'Failed to add employee');
       toast.error(msg);
-      console.error(error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (emp) => {
-    if (!window.confirm(`Are you sure you want to delete ${emp.first_name} ${emp.last_name}?`)) return;
+  const handleDelete = (emp) => {
+    setConfirmModal({
+      open: true,
+      message: `Are you sure you want to delete ${emp.first_name} ${emp.last_name}?`,
+      action: () => doDelete(emp),
+    });
+  };
+
+  const doDelete = async (emp) => {
     try {
       const { error } = await supabase.from('employees').delete().eq('id', emp.id);
       if (error) throw error;
       toast.success('Employee deleted successfully');
       fetchEmployees();
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete employee');
     }
   };
@@ -421,7 +431,7 @@ const Employees = () => {
       if (error) throw error;
       toast.success(`Employee ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
       fetchEmployees();
-    } catch (error) {
+    } catch {
       toast.error('Failed to update status');
     }
   };
@@ -737,7 +747,7 @@ const Employees = () => {
                   type="email"
                   required
                   disabled={!!editingEmployee}
-                  placeholder="employee@beauzead.com"
+                  placeholder="employee@company.com"
                 />
                 {!editingEmployee && (
                   <InputField
@@ -807,6 +817,15 @@ const Employees = () => {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <Modal isOpen={confirmModal.open} onClose={closeConfirmModal} title="Confirm" size="sm">
+        <p className="text-gray-700 mb-6">{confirmModal.message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={closeConfirmModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <button onClick={runConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+        </div>
       </Modal>
     </div>
   );

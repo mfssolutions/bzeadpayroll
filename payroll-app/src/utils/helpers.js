@@ -51,7 +51,7 @@ export const generateEmployeeId = (companyCode, existingCount) => {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const yy = String(now.getFullYear()).slice(-2);
   const seq = String((existingCount || 0) + 1).padStart(4, '0');
-  return `${companyCode || 'BZD'}${mm}${yy}${seq}`;
+  return `${companyCode || 'EMP'}${mm}${yy}${seq}`;
 };
 
 export const convertNumberToWords = (num) => {

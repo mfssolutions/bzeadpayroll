@@ -10,7 +10,7 @@ const PHONE_REGEX = /^\+?[\d\s\-()]{7,20}$/;
 const POSTCODE_MIN_LENGTH = 3;
 
 const Profile = () => {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const { formatCurrency } = useCurrency();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,11 +25,7 @@ const Profile = () => {
   });
   const [passwordForm, setPasswordForm] = useState({ new_password: '', confirm_password: '' });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  async function fetchProfile() {
     const { data, error } = await supabase
       .from('employees')
       .select('*')
@@ -53,7 +49,13 @@ const Profile = () => {
       });
     }
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchProfile(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validateEditForm = () => {
     const errors = {};

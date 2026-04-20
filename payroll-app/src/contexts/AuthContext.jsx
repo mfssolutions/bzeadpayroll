@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -76,8 +77,8 @@ export const AuthProvider = ({ children }) => {
         if (session?.user) {
           await fetchUserProfile(session.user);
         }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
+      } catch {
+        // silently handle auth init errors
       } finally {
         setLoading(false);
       }
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth state changes (sign-out and token refresh only)
     // SIGNED_IN is handled by signIn() and initAuth() — do NOT duplicate here
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event) => {
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);

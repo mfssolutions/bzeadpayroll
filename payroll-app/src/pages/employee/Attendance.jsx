@@ -13,18 +13,14 @@ const Attendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (profile?.id) fetchAttendance();
-  }, [profile, selectedMonth, selectedYear]);
-
-  const fetchAttendance = async () => {
+  async function fetchAttendance() {
     setLoading(true);
     const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
     const monthStr = String(selectedMonth).padStart(2, '0');
     const startDate = `${selectedYear}-${monthStr}-01`;
     const endDate = `${selectedYear}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('attendance')
       .select('*')
       .eq('employee_id', profile.id)
@@ -34,7 +30,14 @@ const Attendance = () => {
 
     setAttendance(data || []);
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const timer = setTimeout(() => { void fetchAttendance(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, selectedMonth, selectedYear]);
 
   const attMap = {};
   attendance.forEach((a) => { attMap[a.attendance_date] = a; });

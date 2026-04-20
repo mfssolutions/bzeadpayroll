@@ -23,12 +23,12 @@ const LeaveRequests = () => {
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', action: null });
 
-  useEffect(() => {
-    fetchLeaveRequests();
-  }, [activeTab]);
+  const closeConfirmModal = () => setConfirmModal({ open: false, message: '', action: null });
+  const runConfirm = () => { confirmModal.action?.(); closeConfirmModal(); };
 
-  const fetchLeaveRequests = async () => {
+  async function fetchLeaveRequests() {
     try {
       setLoading(true);
 
@@ -58,12 +58,18 @@ const LeaveRequests = () => {
       const { data, error } = await query;
       if (error) throw error;
       setLeaveRequests(data || []);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load leave requests');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchLeaveRequests(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const calculateDuration = (fromDate, toDate) => {
     if (!fromDate || !toDate) return 0;
@@ -73,8 +79,15 @@ const LeaveRequests = () => {
     return Math.max(1, diff);
   };
 
-  const handleApprove = async (request) => {
-    if (!confirm('Are you sure you want to approve this leave request?')) return;
+  const handleApprove = (request) => {
+    setConfirmModal({
+      open: true,
+      message: 'Are you sure you want to approve this leave request?',
+      action: () => doApprove(request),
+    });
+  };
+
+  const doApprove = async (request) => {
     try {
       setSubmitting(true);
       const duration = calculateDuration(request.from_date, request.to_date);
@@ -97,7 +110,11 @@ const LeaveRequests = () => {
         'Casual Leave': 'used_casual',
         'Earned Leave': 'used_earned',
       };
-      const field = leaveFieldMap[request.leave_type] || 'used_earned';
+      const field = leaveFieldMap[request.leave_type];
+      if (!field) {
+        toast.error(`Cannot update balance: unknown leave type "${request.leave_type}"`);
+        return;
+      }
 
       // Get current balance
       const { data: balance, error: balError } = await supabase
@@ -117,7 +134,7 @@ const LeaveRequests = () => {
 
       toast.success('Leave request approved');
       fetchLeaveRequests();
-    } catch (error) {
+    } catch {
       toast.error('Failed to approve leave request');
     } finally {
       setSubmitting(false);
@@ -152,21 +169,28 @@ const LeaveRequests = () => {
       toast.success('Leave request rejected');
       setShowRejectModal(false);
       fetchLeaveRequests();
-    } catch (error) {
+    } catch {
       toast.error('Failed to reject leave request');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this leave request?')) return;
+  const handleDelete = (id) => {
+    setConfirmModal({
+      open: true,
+      message: 'Are you sure you want to delete this leave request?',
+      action: () => doDelete(id),
+    });
+  };
+
+  const doDelete = async (id) => {
     try {
       const { error } = await supabase.from('leave_requests').delete().eq('id', id);
       if (error) throw error;
       toast.success('Leave request deleted');
       fetchLeaveRequests();
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete leave request');
     }
   };
@@ -360,6 +384,15 @@ const LeaveRequests = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <Modal isOpen={confirmModal.open} onClose={closeConfirmModal} title="Confirm" size="sm">
+        <p className="text-gray-700 mb-6">{confirmModal.message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={closeConfirmModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <button onClick={runConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+        </div>
       </Modal>
     </div>
   );

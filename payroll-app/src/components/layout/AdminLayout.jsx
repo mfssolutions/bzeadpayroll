@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 import CurrencyToggle from '../ui/CurrencyToggle';
 
 const navLinks = [
@@ -26,15 +27,12 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, profile, role, signOut } = useAuth();
+  const { settings } = useCompanySettings();
   const location = useLocation();
   const navigate = useNavigate();
 
   const pageTitle = pageTitles[location.pathname] || 'Admin';
   const adminName = profile?.full_name || user?.email || 'Admin';
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -70,7 +68,7 @@ const AdminLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b border-gray-100">
-            <h1 className="text-2xl font-bold text-red-600">BEAUZEAD LTD</h1>
+            <h1 className="text-2xl font-bold text-red-600">{settings.company_name || 'Payroll System'}</h1>
             <p className="text-sm text-gray-500 mt-1">Admin Panel</p>
           </div>
 
@@ -82,6 +80,7 @@ const AdminLayout = () => {
                 <Link
                   key={link.path}
                   to={link.path}
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
                     isActive
                       ? 'bg-red-50 text-red-600 font-medium'
@@ -124,7 +123,7 @@ const AdminLayout = () => {
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                  onClick={() => setSidebarOpen((prev) => !prev)}
                 className="lg:hidden p-2 rounded-lg hover:bg-red-700 transition-colors"
               >
                 <i className="fas fa-bars text-lg"></i>

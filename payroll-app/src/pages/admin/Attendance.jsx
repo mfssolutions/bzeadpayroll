@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -23,21 +23,17 @@ const Attendance = () => {
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', action: null });
+
+  const closeConfirmModal = () => setConfirmModal({ open: false, message: '', action: null });
+  const runConfirm = () => { confirmModal.action?.(); closeConfirmModal(); };
   const [formData, setFormData] = useState({
     status: 'present',
-    check_in: settings.work_start_time || '09:30',
-    check_out: settings.work_end_time || '18:00',
+    check_in: '',
+    check_out: '',
   });
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  useEffect(() => {
-    fetchAttendanceData();
-  }, [selectedDate]);
-
-  const fetchEmployees = async () => {
+  async function fetchEmployees() {
     try {
       const { data, error } = await supabase
         .from('employees')
@@ -47,12 +43,12 @@ const Attendance = () => {
 
       if (error) throw error;
       setEmployees(data || []);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load employees');
     }
-  };
+  }
 
-  const fetchAttendanceData = useCallback(async () => {
+  async function fetchAttendanceData() {
     try {
       setLoading(true);
 
@@ -131,22 +127,39 @@ const Attendance = () => {
           },
         ],
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to load attendance data');
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchEmployees();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchAttendanceData();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const handleStatusChange = (status) => {
     let check_in = '';
     let check_out = '';
     if (status === 'present') {
-      check_in = settings.work_start_time || '09:30';
-      check_out = settings.work_end_time || '18:00';
+      check_in = settings.work_start_time || '';
+      check_out = settings.work_end_time || '';
     } else if (status === 'halfday') {
-      check_in = settings.work_start_time || '09:30';
-      check_out = settings.halfday_end_time || '13:30';
+      check_in = settings.work_start_time || '';
+      check_out = settings.halfday_end_time || '';
     }
     setFormData({ status, check_in, check_out });
   };
@@ -156,7 +169,7 @@ const Attendance = () => {
       toast.error('Please select an employee');
       return;
     }
-    setFormData({ status: 'present', check_in: settings.work_start_time || '09:30', check_out: settings.work_end_time || '18:00' });
+    setFormData({ status: 'present', check_in: settings.work_start_time || '', check_out: settings.work_end_time || '' });
     setShowModal(true);
   };
 
@@ -196,21 +209,28 @@ const Attendance = () => {
       if (markDate === selectedDate) {
         fetchAttendanceData();
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to mark attendance');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this attendance record?')) return;
+  const handleDelete = (id) => {
+    setConfirmModal({
+      open: true,
+      message: 'Are you sure you want to delete this attendance record?',
+      action: () => doDelete(id),
+    });
+  };
+
+  const doDelete = async (id) => {
     try {
       const { error } = await supabase.from('attendance').delete().eq('id', id);
       if (error) throw error;
       toast.success('Attendance record deleted');
       fetchAttendanceData();
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete record');
     }
   };
@@ -427,6 +447,15 @@ const Attendance = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <Modal isOpen={confirmModal.open} onClose={closeConfirmModal} title="Confirm" size="sm">
+        <p className="text-gray-700 mb-6">{confirmModal.message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={closeConfirmModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <button onClick={runConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+        </div>
       </Modal>
     </div>
   );

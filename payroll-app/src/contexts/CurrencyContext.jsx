@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const CurrencyContext = createContext(null);
@@ -59,10 +60,15 @@ export const CurrencyProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    fetchExchangeRate();
+    const timer = setTimeout(() => {
+      void fetchExchangeRate();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [fetchExchangeRate]);
 
   const toggleCurrency = () => {

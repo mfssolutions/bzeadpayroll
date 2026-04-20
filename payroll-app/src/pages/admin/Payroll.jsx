@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
 import Modal from '../../components/ui/Modal';
 import { MONTHS, calculatePayroll, getYearRange } from '../../utils/helpers';
@@ -10,7 +9,6 @@ import toast from 'react-hot-toast';
 import { Bar } from 'react-chartjs-2';
 
 const Payroll = () => {
-  const { profile } = useAuth();
   const { settings } = useCompanySettings();
   const { formatCurrency } = useCurrency();
   const [payrolls, setPayrolls] = useState([]);
@@ -20,12 +18,12 @@ const Payroll = () => {
   const [processYear, setProcessYear] = useState(new Date().getFullYear());
   const [processing, setProcessing] = useState(false);
   const [payslipModal, setPayslipModal] = useState({ open: false, payroll: null, employee: null });
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', action: null });
 
-  useEffect(() => {
-    fetchPayrolls();
-  }, [selectedYear]);
+  const closeConfirmModal = () => setConfirmModal({ open: false, message: '', action: null });
+  const runConfirm = () => { confirmModal.action?.(); closeConfirmModal(); };
 
-  const fetchPayrolls = async () => {
+  async function fetchPayrolls() {
     setLoading(true);
     const { data, error } = await supabase
       .from('payroll')
@@ -35,12 +33,24 @@ const Payroll = () => {
 
     if (!error) setPayrolls(data || []);
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchPayrolls(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear]);
 
   const processPayroll = async () => {
-    if (!confirm(`Process payroll for ${processMonth} ${processYear} for all active employees?`)) return;
-    setProcessing(true);
+    setConfirmModal({
+      open: true,
+      message: `Process payroll for ${processMonth} ${processYear} for all active employees?`,
+      action: () => doProcessPayroll(),
+    });
+  };
 
+  const doProcessPayroll = async () => {
+    setProcessing(true);
     try {
       const { data: employees, error: empError } = await supabase
         .from('employees')
@@ -76,7 +86,7 @@ const Payroll = () => {
       });
 
       for (const emp of employees) {
-        const daysPresent = attendanceMap[emp.id] || workingDaysCount;
+        const daysPresent = attendanceMap[emp.id] ?? 0;
         const calc = calculatePayroll(emp.basic_salary, settings);
 
         const { error } = await supabase
@@ -134,8 +144,15 @@ const Payroll = () => {
     }
   };
 
-  const deletePayroll = async (id) => {
-    if (!confirm('Delete this payroll record?')) return;
+  const deletePayroll = (id) => {
+    setConfirmModal({
+      open: true,
+      message: 'Delete this payroll record?',
+      action: () => doDeletePayroll(id),
+    });
+  };
+
+  const doDeletePayroll = async (id) => {
     const { error } = await supabase.from('payroll').delete().eq('id', id);
     if (error) {
       toast.error('Error deleting payroll');
@@ -345,6 +362,15 @@ const Payroll = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Confirm Modal */}
+      <Modal isOpen={confirmModal.open} onClose={closeConfirmModal} title="Confirm" size="sm">
+        <p className="text-gray-700 mb-6">{confirmModal.message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={closeConfirmModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <button onClick={runConfirm} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm</button>
+        </div>
       </Modal>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 let cachedSettings = null;
+let cachedError = null;
 let fetchPromise = null;
 
 const fetchSettings = async () => {
@@ -9,7 +10,7 @@ const fetchSettings = async () => {
     .from('company_settings')
     .select('setting_key, setting_value, setting_type');
 
-  if (error) return {};
+  if (error) return { settings: {}, error: error.message };
 
   const map = {};
   (data || []).forEach((s) => {
@@ -21,17 +22,16 @@ const fetchSettings = async () => {
       map[s.setting_key] = s.setting_value;
     }
   });
-  return map;
+  return { settings: map, error: null };
 };
 
 export const useCompanySettings = () => {
   const [settings, setSettings] = useState(cachedSettings || {});
   const [loading, setLoading] = useState(!cachedSettings);
+  const [settingsError, setSettingsError] = useState(cachedError);
 
   useEffect(() => {
-    if (cachedSettings) {
-      setSettings(cachedSettings);
-      setLoading(false);
+    if (cachedSettings !== null) {
       return;
     }
 
@@ -39,9 +39,11 @@ export const useCompanySettings = () => {
       fetchPromise = fetchSettings();
     }
 
-    fetchPromise.then((data) => {
+    fetchPromise.then(({ settings: data, error }) => {
       cachedSettings = data;
+      cachedError = error;
       setSettings(data);
+      setSettingsError(error);
       setLoading(false);
     });
   }, []);
@@ -49,14 +51,17 @@ export const useCompanySettings = () => {
   const refresh = async () => {
     fetchPromise = null;
     cachedSettings = null;
+    cachedError = null;
     setLoading(true);
-    const data = await fetchSettings();
+    const { settings: data, error } = await fetchSettings();
     cachedSettings = data;
+    cachedError = error;
     setSettings(data);
+    setSettingsError(error);
     setLoading(false);
   };
 
-  return { settings, loading, refresh };
+  return { settings, loading, settingsError, refresh };
 };
 
 export const getSettingValue = (settings, key, fallback) => {

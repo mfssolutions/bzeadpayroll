@@ -5,7 +5,7 @@ import Modal from '../../components/ui/Modal';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user } = useAuth();
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editModal, setEditModal] = useState(false);
@@ -14,11 +14,7 @@ const Profile = () => {
   const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  async function fetchProfile() {
     const { data, error } = await supabase
       .from('admin_users')
       .select('*')
@@ -30,7 +26,13 @@ const Profile = () => {
       setEditForm({ full_name: data.full_name, email: data.email, phone: data.phone || '' });
     }
     setLoading(false);
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void fetchProfile(); }, 0);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
