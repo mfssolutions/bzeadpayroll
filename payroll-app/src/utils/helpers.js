@@ -1,37 +1,14 @@
-export const formatCurrency = (amount, currency = 'GBP') => {
-  const num = Number(amount) || 0;
-  if (currency === 'INR') {
-    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  return '£' + num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
+const round2 = (n) => Math.round(n * 100) / 100;
 
 export const formatDate = (dateStr) => {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
-export const formatDateTime = (dateStr) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+  const parts = String(dateStr).split('T')[0].split('-');
+  if (parts.length !== 3) return String(dateStr);
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
 export const getDaysInMonth = (month, year) => {
   return new Date(year, month, 0).getDate();
-};
-
-export const getMonthName = (monthNum) => {
-  return MONTHS[monthNum - 1] || '';
 };
 
 export const MONTHS = [
@@ -44,14 +21,6 @@ export const MONTHS = [
 export const getYearRange = () => {
   const currentYear = new Date().getFullYear();
   return [currentYear - 1, currentYear, currentYear + 1];
-};
-
-export const generateEmployeeId = (companyCode, existingCount) => {
-  const now = new Date();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const yy = String(now.getFullYear()).slice(-2);
-  const seq = String((existingCount || 0) + 1).padStart(4, '0');
-  return `${companyCode || 'EMP'}${mm}${yy}${seq}`;
 };
 
 export const convertNumberToWords = (num) => {
@@ -89,7 +58,7 @@ export const convertNumberToWords = (num) => {
   return result || 'Zero';
 };
 
-export const calculatePayroll = (basicSalary, config = {}) => {
+export const calculatePayroll = (basicSalary, config = {}, daysPresent = null, workingDays = null) => {
   const basic = Number(basicSalary) || 0;
   const hraRate = (Number(config.hra_percentage) || 40) / 100;
   const saRate = (Number(config.special_allowance_percentage) || 15) / 100;
@@ -98,14 +67,20 @@ export const calculatePayroll = (basicSalary, config = {}) => {
   const tdsThreshold = Number(config.tds_threshold) || 50000;
   const tdsRate = (Number(config.tds_rate) || 10) / 100;
 
-  const hra = basic * hraRate;
-  const specialAllowance = basic * saRate;
-  const grossEarnings = basic + hra + specialAllowance;
-  const pfDeduction = basic * pfRate;
-  const professionalTax = ptAmount;
-  const tds = grossEarnings > tdsThreshold ? (grossEarnings - tdsThreshold) * tdsRate : 0;
-  const totalDeductions = pfDeduction + professionalTax + tds;
-  const netSalary = grossEarnings - totalDeductions;
+  // Prorate based on attendance if data is available
+  const ratio = (daysPresent !== null && workingDays !== null && workingDays > 0)
+    ? daysPresent / workingDays
+    : 1;
+
+  const hra = round2(basic * hraRate * ratio);
+  const specialAllowance = round2(basic * saRate * ratio);
+  const proratedBasic = round2(basic * ratio);
+  const grossEarnings = round2(proratedBasic + hra + specialAllowance);
+  const pfDeduction = round2(proratedBasic * pfRate);
+  const professionalTax = round2(ptAmount);
+  const tds = round2(grossEarnings > tdsThreshold ? (grossEarnings - tdsThreshold) * tdsRate : 0);
+  const totalDeductions = round2(pfDeduction + professionalTax + tds);
+  const netSalary = round2(grossEarnings - totalDeductions);
 
   return {
     hra,

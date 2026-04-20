@@ -36,19 +36,34 @@ const Profile = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    if (!editForm.full_name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    if (!editForm.email.trim() || !/\S+@\S+\.\S+/.test(editForm.email)) {
+      toast.error('Valid email is required');
+      return;
+    }
     setSaving(true);
 
     try {
       const { error } = await supabase
         .from('admin_users')
         .update({
-          full_name: editForm.full_name,
-          email: editForm.email,
-          phone: editForm.phone,
+          full_name: editForm.full_name.trim(),
+          email: editForm.email.trim(),
+          phone: editForm.phone.trim(),
         })
         .eq('auth_uid', user.id);
 
       if (error) throw error;
+
+      // Sync auth email if changed (#6)
+      if (editForm.email.trim() !== adminData?.email) {
+        const { error: authErr } = await supabase.auth.updateUser({ email: editForm.email.trim() });
+        if (authErr) toast.error('Profile saved but auth email sync failed: ' + authErr.message);
+      }
+
       toast.success('Profile updated successfully');
       setEditModal(false);
       fetchProfile();
@@ -69,9 +84,24 @@ const Profile = () => {
       toast.error('Password must be at least 6 characters');
       return;
     }
+    if (!passwordForm.current_password) {
+      toast.error('Current password is required');
+      return;
+    }
     setSaving(true);
 
     try {
+      // Verify current password first (#7)
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordForm.current_password,
+      });
+      if (verifyErr) {
+        toast.error('Current password is incorrect');
+        setSaving(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: passwordForm.new_password,
       });

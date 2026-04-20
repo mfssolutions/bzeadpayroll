@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
 import { formatDate, MONTHS, getDaysInMonth, getYearRange } from '../../utils/helpers';
 import { Bar } from 'react-chartjs-2';
+import toast from 'react-hot-toast';
 
 const Attendance = () => {
   const { profile } = useAuth();
@@ -14,22 +15,28 @@ const Attendance = () => {
   const [loading, setLoading] = useState(true);
 
   async function fetchAttendance() {
-    setLoading(true);
-    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-    const monthStr = String(selectedMonth).padStart(2, '0');
-    const startDate = `${selectedYear}-${monthStr}-01`;
-    const endDate = `${selectedYear}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+    try {
+      setLoading(true);
+      const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+      const monthStr = String(selectedMonth).padStart(2, '0');
+      const startDate = `${selectedYear}-${monthStr}-01`;
+      const endDate = `${selectedYear}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
 
-    const { data } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('employee_id', profile.id)
-      .gte('attendance_date', startDate)
-      .lte('attendance_date', endDate)
-      .order('attendance_date', { ascending: true });
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('employee_id', profile.id)
+        .gte('attendance_date', startDate)
+        .lte('attendance_date', endDate)
+        .order('attendance_date', { ascending: true });
 
-    setAttendance(data || []);
-    setLoading(false);
+      if (error) throw error;
+      setAttendance(data || []);
+    } catch {
+      toast.error('Failed to load attendance');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {

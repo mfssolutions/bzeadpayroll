@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/ui/StatsCard';
 import Modal from '../../components/ui/Modal';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 import { formatDate } from '../../utils/helpers';
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
 
 const LeaveRequests = () => {
   const { profile } = useAuth();
+  const { settings } = useCompanySettings();
   const [loading, setLoading] = useState(true);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
@@ -104,12 +106,13 @@ const LeaveRequests = () => {
 
       if (updateError) throw updateError;
 
-      // Update leave balances — map leave type to balance column
-      const leaveFieldMap = {
-        'Sick Leave': 'used_sick',
-        'Casual Leave': 'used_casual',
-        'Earned Leave': 'used_earned',
-      };
+      // Update leave balances — map leave type to balance column dynamically
+      const leaveTypes = Array.isArray(settings.leave_types) ? settings.leave_types : ['Sick Leave', 'Casual Leave', 'Earned Leave'];
+      const balanceFields = ['used_sick', 'used_casual', 'used_earned'];
+      const leaveFieldMap = {};
+      leaveTypes.forEach((type, i) => {
+        if (i < balanceFields.length) leaveFieldMap[type] = balanceFields[i];
+      });
       const field = leaveFieldMap[request.leave_type];
       if (!field) {
         toast.error(`Cannot update balance: unknown leave type "${request.leave_type}"`);
@@ -186,6 +189,33 @@ const LeaveRequests = () => {
 
   const doDelete = async (id) => {
     try {
+      // Find the request to check if it was approved (need to restore balance)
+      const request = leaveRequests.find((r) => r.id === id);
+      if (request && request.status === 'approved') {
+        const duration = calculateDuration(request.from_date, request.to_date);
+        const leaveTypes = Array.isArray(settings.leave_types) ? settings.leave_types : ['Sick Leave', 'Casual Leave', 'Earned Leave'];
+        const balanceFields = ['used_sick', 'used_casual', 'used_earned'];
+        const leaveFieldMap = {};
+        leaveTypes.forEach((type, i) => {
+          if (i < balanceFields.length) leaveFieldMap[type] = balanceFields[i];
+        });
+        const field = leaveFieldMap[request.leave_type];
+        if (field) {
+          const { data: balance } = await supabase
+            .from('leave_balances')
+            .select('*')
+            .eq('employee_id', request.employee_id)
+            .single();
+
+          if (balance) {
+            await supabase
+              .from('leave_balances')
+              .update({ [field]: Math.max(0, (balance[field] || 0) - duration) })
+              .eq('employee_id', request.employee_id);
+          }
+        }
+      }
+
       const { error } = await supabase.from('leave_requests').delete().eq('id', id);
       if (error) throw error;
       toast.success('Leave request deleted');

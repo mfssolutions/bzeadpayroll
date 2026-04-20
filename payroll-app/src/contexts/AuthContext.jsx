@@ -36,6 +36,13 @@ export const AuthProvider = ({ children }) => {
       .single();
 
     if (adminData && !adminError) {
+      if (adminData.status !== 'active') {
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+        setRole(null);
+        return;
+      }
       setProfile(adminData);
       setRole('admin');
       // Update last_login
@@ -54,6 +61,13 @@ export const AuthProvider = ({ children }) => {
       .single();
 
     if (empCredData && !empCredError) {
+      if (empCredData.employees?.status !== 'active') {
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+        setRole(null);
+        return;
+      }
       setProfile(empCredData.employees);
       setRole('employee');
       // Update last_login

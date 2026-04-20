@@ -6,6 +6,7 @@ import Modal from '../../components/ui/Modal';
 import { MONTHS, convertNumberToWords, getYearRange } from '../../utils/helpers';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
+import toast from 'react-hot-toast';
 
 const Payslips = () => {
   const { profile } = useAuth();
@@ -17,16 +18,22 @@ const Payslips = () => {
   const [payslipModal, setPayslipModal] = useState({ open: false, payslip: null });
 
   async function fetchPayslips() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('payroll')
-      .select('*')
-      .eq('employee_id', profile.id)
-      .eq('year', selectedYear)
-      .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('payroll')
+        .select('*')
+        .eq('employee_id', profile.id)
+        .eq('year', selectedYear)
+        .order('generated_at', { ascending: false });
 
-    if (!error) setPayslips(data || []);
-    setLoading(false);
+      if (error) throw error;
+      setPayslips(data || []);
+    } catch {
+      toast.error('Failed to load payslips');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -181,7 +188,7 @@ const Payslips = () => {
 
             <div className="flex justify-between text-xs text-gray-400 border-t pt-2">
               <span>Working Days: {payslipModal.payslip.working_days} | Present: {payslipModal.payslip.days_present} | Absent: {payslipModal.payslip.working_days - payslipModal.payslip.days_present}</span>
-              <span>Generated: {new Date(payslipModal.payslip.created_at).toLocaleString()}</span>
+              <span>Generated: {new Date(payslipModal.payslip.generated_at).toLocaleString()}</span>
             </div>
 
             <p className="text-center text-xs text-gray-400 border-t pt-2">This is a computer-generated document and does not require a signature.</p>

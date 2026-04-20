@@ -43,13 +43,24 @@ const Settings = () => {
   const saveSectionSettings = async (keys) => {
     setSaving(true);
     try {
+      const sectionTypeMap = {
+        company_name: 'company', company_email: 'company', company_phone: 'company', company_website: 'company',
+        company_registration: 'company', vat_number: 'company', company_address: 'company', departments: 'company',
+        currency: 'payroll', hra_percentage: 'payroll', special_allowance_percentage: 'payroll',
+        pf_percentage: 'payroll', professional_tax: 'payroll', tds_percentage: 'payroll',
+        sick_leave: 'leave', casual_leave: 'leave', earned_leave: 'leave', leave_types: 'leave',
+        email_notifications: 'notification', sms_notifications: 'notification',
+        two_factor_auth: 'security', session_timeout: 'security', password_policy: 'security',
+      };
+
       for (const key of keys) {
-        await supabase
+        const { error } = await supabase
           .from('company_settings')
           .upsert(
-            { setting_key: key, setting_value: settings[key] || '' },
+            { setting_key: key, setting_value: settings[key] || '', setting_type: sectionTypeMap[key] || activeTab },
             { onConflict: 'setting_key' }
           );
+        if (error) throw error;
       }
       toast.success('Settings saved successfully');
     } catch (err) {

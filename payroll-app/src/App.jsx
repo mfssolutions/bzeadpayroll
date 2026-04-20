@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, Component } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -83,11 +83,40 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <i className="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">An unexpected error occurred.</p>
+            <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Reload</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App = () => {
   return (
     <AuthProvider>
       <CurrencyProvider>
       <BrowserRouter>
+        <ErrorBoundary>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Public routes */}
@@ -135,6 +164,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
       </CurrencyProvider>
       <Toaster

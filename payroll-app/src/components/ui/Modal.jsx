@@ -12,6 +12,7 @@ const sizeClasses = {
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   const overlayRef = useRef(null);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -20,6 +21,8 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+      // Focus trap: focus the dialog on open
+      setTimeout(() => dialogRef.current?.focus(), 0);
     }
     return () => {
       document.removeEventListener('keydown', handleEscape);
@@ -40,11 +43,16 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       onClick={handleBackdropClick}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        tabIndex={-1}
         className={`${sizeClasses[size] || sizeClasses.md} w-full bg-white rounded-xl shadow-2xl transform transition-all animate-modal-in`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-red-50 border-b border-red-100 rounded-t-xl">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 id="modal-title" className="text-lg font-semibold text-gray-900">{title}</h3>
           <button
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-gray-600 hover:bg-red-100 rounded-lg transition-colors"

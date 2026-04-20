@@ -29,7 +29,7 @@ const Payroll = () => {
       .from('payroll')
       .select('*, employees(first_name, last_name, employee_id, department, designation, bank_account, ni_number)')
       .eq('year', selectedYear)
-      .order('created_at', { ascending: false });
+      .order('generated_at', { ascending: false });
 
     if (!error) setPayrolls(data || []);
     setLoading(false);
@@ -87,7 +87,7 @@ const Payroll = () => {
 
       for (const emp of employees) {
         const daysPresent = attendanceMap[emp.id] ?? 0;
-        const calc = calculatePayroll(emp.basic_salary, settings);
+        const calc = calculatePayroll(emp.basic_salary, settings, daysPresent, workingDaysCount);
 
         const { error } = await supabase
           .from('payroll')

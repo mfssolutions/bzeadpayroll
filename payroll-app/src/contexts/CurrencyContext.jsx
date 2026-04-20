@@ -45,6 +45,9 @@ export const CurrencyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
+      // NOTE: VITE_ env vars are embedded in the client bundle at build time.
+      // This API key is visible to end users in browser dev tools.
+      // For production, proxy this through a backend endpoint.
       const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY;
       const res = await fetch(`https://v6.exchangerate-api.com/v6/${apiKey}/latest/GBP`);
       if (!res.ok) throw new Error(`Exchange rate API error: ${res.status}`);

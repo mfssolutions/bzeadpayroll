@@ -124,7 +124,7 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLeaveAction = async (id, action) => {
+  const handleLeaveAction = async (leave, action) => {
     try {
       const { error } = await supabase
         .from('leave_requests')
@@ -133,9 +133,35 @@ const Dashboard = () => {
           approved_by: profile?.id,
           approved_at: new Date().toISOString(),
         })
-        .eq('id', id);
+        .eq('id', leave.id);
 
       if (error) throw error;
+
+      // Update leave balance when approving
+      if (action === 'approved') {
+        const duration = Math.max(1, Math.ceil((new Date(leave.to_date) - new Date(leave.from_date)) / (1000 * 60 * 60 * 24)) + 1);
+        const leaveFieldMap = {
+          'Sick Leave': 'used_sick',
+          'Casual Leave': 'used_casual',
+          'Earned Leave': 'used_earned',
+        };
+        const field = leaveFieldMap[leave.leave_type];
+        if (field) {
+          const { data: balance, error: balError } = await supabase
+            .from('leave_balances')
+            .select('*')
+            .eq('employee_id', leave.employee_id)
+            .single();
+
+          if (!balError && balance) {
+            await supabase
+              .from('leave_balances')
+              .update({ [field]: (balance[field] || 0) + duration })
+              .eq('employee_id', leave.employee_id);
+          }
+        }
+      }
+
       toast.success(`Leave request ${action}`);
       fetchDashboardData();
     } catch {
@@ -342,13 +368,13 @@ const Dashboard = () => {
                         {leave.status === 'pending' ? (
                           <div className="flex gap-1">
                             <button
-                              onClick={() => handleLeaveAction(leave.id, 'approved')}
+                              onClick={() => handleLeaveAction(leave, 'approved')}
                               className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
                             >
                               Approve
                             </button>
                             <button
-                              onClick={() => handleLeaveAction(leave.id, 'rejected')}
+                              onClick={() => handleLeaveAction(leave, 'rejected')}
                               className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                             >
                               Reject

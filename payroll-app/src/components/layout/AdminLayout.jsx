@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
 import CurrencyToggle from '../ui/CurrencyToggle';
+import toast from 'react-hot-toast';
 
 const navLinks = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: 'fa-tachometer-alt' },
@@ -27,7 +28,7 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, profile, role, signOut } = useAuth();
-  const { settings } = useCompanySettings();
+  const { settings, settingsError } = useCompanySettings();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -45,7 +46,11 @@ const AdminLayout = () => {
   }, [dropdownOpen]);
 
   const handleLogout = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      toast.error('Logout failed');
+    }
     navigate('/auth/admin-login');
   };
 
@@ -182,6 +187,11 @@ const AdminLayout = () => {
 
         {/* Page content */}
         <main className="p-4 md:p-6">
+          {settingsError && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+              <i className="fas fa-exclamation-triangle mr-2"></i>Company settings could not be loaded.
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

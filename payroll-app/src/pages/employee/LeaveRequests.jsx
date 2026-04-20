@@ -66,11 +66,16 @@ const LeaveRequests = () => {
   const calculateDuration = (from, to) => {
     if (!from || !to) return 0;
     const diff = new Date(to) - new Date(from);
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
+    return days < 1 ? 0 : days;
   };
 
   const handleApply = async (e) => {
     e.preventDefault();
+    if (new Date(form.from_date) > new Date(form.to_date)) {
+      toast.error('From date cannot be after To date');
+      return;
+    }
     const duration = calculateDuration(form.from_date, form.to_date);
     if (duration < 1) {
       toast.error('Invalid date range');
@@ -268,6 +273,7 @@ const LeaveRequests = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
               <input type="date" value={form.from_date} onChange={(e) => setForm({ ...form, from_date: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" required />
             </div>
             <div>

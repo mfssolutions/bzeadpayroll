@@ -6,6 +6,7 @@ import { MONTHS } from '../../utils/helpers';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -20,69 +21,85 @@ const Dashboard = () => {
   const currentYear = now.getFullYear();
 
   async function fetchDashboardData() {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // Basic salary
-    const salary = Number(profile?.basic_salary) || 0;
+      // Basic salary
+      const salary = Number(profile?.basic_salary) || 0;
 
-    // Present days this month
-    const monthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-    const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${new Date(currentYear, currentMonth, 0).getDate()}`;
+      // Present days this month
+      const monthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+      const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${new Date(currentYear, currentMonth, 0).getDate()}`;
 
-    const { data: attData } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('employee_id', profile.id)
-      .gte('attendance_date', monthStart)
-      .lte('attendance_date', monthEnd)
-      .eq('status', 'present');
-
-    const presentDays = attData?.length || 0;
-
-    // Leave balance
-    const { data: lbData } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('employee_id', profile.id)
-      .eq('year', currentYear)
-      .single();
-
-    const availableLeaves = lbData
-      ? (lbData.sick_leave - lbData.used_sick) + (lbData.casual_leave - lbData.used_casual) + (lbData.earned_leave - lbData.used_earned)
-      : 0;
-
-    setLeaveBalance(lbData);
-
-    // Pending leaves
-    const { count: pendingCount } = await supabase
-      .from('leave_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('employee_id', profile.id)
-      .eq('status', 'pending');
-
-    setStats({ salary, presentDays, availableLeaves, pendingLeaves: pendingCount || 0 });
-
-    // Attendance trend (last 7 days)
-    const trend = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-
-      const { data: dayAtt } = await supabase
+      const { data: attData, error: attError } = await supabase
         .from('attendance')
-        .select('status')
+        .select('*')
         .eq('employee_id', profile.id)
-        .eq('attendance_date', dateStr)
+        .gte('attendance_date', monthStart)
+        .lte('attendance_date', monthEnd)
+        .eq('status', 'present');
+
+      if (attError) throw attError;
+      const presentDays = attData?.length || 0;
+
+      // Leave balance
+      const { data: lbData, error: lbError } = await supabase
+        .from('leave_balances')
+        .select('*')
+        .eq('employee_id', profile.id)
+        .eq('year', currentYear)
         .single();
 
-      trend.push({
-        date: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
-        value: dayAtt?.status === 'present' ? 1 : dayAtt?.status === 'halfday' ? 0.5 : 0,
+      if (lbError && lbError.code !== 'PGRST116') throw lbError;
+
+      const availableLeaves = lbData
+        ? (lbData.sick_leave - lbData.used_sick) + (lbData.casual_leave - lbData.used_casual) + (lbData.earned_leave - lbData.used_earned)
+        : 0;
+
+      setLeaveBalance(lbData);
+
+      // Pending leaves
+      const { count: pendingCount, error: pendErr } = await supabase
+        .from('leave_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('employee_id', profile.id)
+        .eq('status', 'pending');
+
+      if (pendErr) throw pendErr;
+
+      setStats({ salary, presentDays, availableLeaves, pendingLeaves: pendingCount || 0 });
+
+      // Attendance trend (last 7 days) — single query instead of N+1
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        last7Days.push(d.toISOString().split('T')[0]);
+      }
+
+      const { data: trendData } = await supabase
+        .from('attendance')
+        .select('attendance_date, status')
+        .eq('employee_id', profile.id)
+        .in('attendance_date', last7Days);
+
+      const trendMap = {};
+      (trendData || []).forEach((a) => { trendMap[a.attendance_date] = a.status; });
+
+      const trend = last7Days.map((dateStr) => {
+        const d = new Date(dateStr + 'T12:00:00');
+        return {
+          date: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+          value: trendMap[dateStr] === 'present' ? 1 : trendMap[dateStr] === 'halfday' ? 0.5 : 0,
+        };
       });
+
+      setAttendanceTrend(trend);
+    } catch {
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
     }
-    setAttendanceTrend(trend);
-    setLoading(false);
   }
 
   useEffect(() => {
