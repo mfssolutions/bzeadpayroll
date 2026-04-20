@@ -85,17 +85,16 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Listen for auth state changes
+    // Listen for auth state changes (sign-out and token refresh only)
+    // SIGNED_IN is handled by signIn() and initAuth() — do NOT duplicate here
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          await fetchUserProfile(session.user);
-        } else if (event === 'SIGNED_OUT') {
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
           setRole(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
