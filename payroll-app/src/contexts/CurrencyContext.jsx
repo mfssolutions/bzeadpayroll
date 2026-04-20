@@ -44,7 +44,8 @@ export const CurrencyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('https://v6.exchangerate-api.com/v6/616eb03f835af143d6ac3c10/latest/GBP');
+      const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY;
+      const res = await fetch(`https://v6.exchangerate-api.com/v6/${apiKey}/latest/GBP`);
       if (!res.ok) throw new Error(`Exchange rate API error: ${res.status}`);
       const data = await res.json();
       const rate = data.conversion_rates?.INR;
