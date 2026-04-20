@@ -4,6 +4,7 @@ const CurrencyContext = createContext(null);
 
 const CACHE_KEY = 'bzead_exchange_rate';
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+const FALLBACK_EXCHANGE_RATE = 110; // GBP to INR fallback when API is unreachable
 
 const getCachedRate = () => {
   try {
@@ -53,7 +54,7 @@ export const CurrencyProvider = ({ children }) => {
     } catch (err) {
       setError(err.message);
       // Fallback rate
-      if (!exchangeRate) setExchangeRate(110);
+      if (!exchangeRate) setExchangeRate(FALLBACK_EXCHANGE_RATE);
     } finally {
       setLoading(false);
     }
@@ -77,14 +78,14 @@ export const CurrencyProvider = ({ children }) => {
     }
 
     // Convert GBP → INR
-    const converted = num * (exchangeRate || 110);
+    const converted = num * (exchangeRate || FALLBACK_EXCHANGE_RATE);
     return '₹' + converted.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }, [currency, exchangeRate]);
 
   const convertAmount = useCallback((amount) => {
     const num = Number(amount) || 0;
     if (currency === 'GBP') return num;
-    return num * (exchangeRate || 110);
+    return num * (exchangeRate || FALLBACK_EXCHANGE_RATE);
   }, [currency, exchangeRate]);
 
   return (

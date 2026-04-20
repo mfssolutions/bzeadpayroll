@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import Modal from '../../components/ui/Modal';
 import { useCompanySettings } from '../../hooks/useCompanySettings';
-import CurrencyToggle from '../../components/ui/CurrencyToggle';
 
 // ── Validation helpers ──
 const NI_REGEX = /^[A-CEGHJ-PR-TW-Z]{2}\d{6}[A-D]$/i;
@@ -81,7 +80,8 @@ const validateField = (name, value, formData, isNew) => {
       if (value && !EMAIL_REGEX.test(value)) return 'Enter a valid email address';
       return '';
     case 'ni_number':
-      if (value && !NI_REGEX.test(value.replace(/\s/g, ''))) return 'Invalid NI format (e.g. QQ123456A)';
+      if (!value || !value.trim()) return 'NI Number is required for UK payroll';
+      if (!NI_REGEX.test(value.replace(/\s/g, ''))) return 'Invalid NI format (e.g. QQ123456A)';
       return '';
     case 'passport_no':
       if (value && !PASSPORT_REGEX.test(value)) return 'Invalid passport number format';
@@ -276,11 +276,13 @@ const Employees = () => {
 
       if (editingEmployee) {
         const { password, email, ...updateFields } = formData;
+        const salaryNum = Number(updateFields.salary_amount) || 0;
         const { error } = await supabase
           .from('employees')
           .update({
             ...updateFields,
-            salary_amount: Number(updateFields.salary_amount) || 0,
+            salary_amount: salaryNum,
+            basic_salary: salaryNum,
             ni_number: updateFields.ni_number ? updateFields.ni_number.replace(/\s/g, '').toUpperCase() : null,
             updated_at: new Date().toISOString(),
           })
@@ -457,7 +459,6 @@ const Employees = () => {
           <p className="text-gray-500 mt-1">{employees.length} total employees</p>
         </div>
         <div className="flex items-center gap-3">
-          <CurrencyToggle />
           <button
             onClick={openAddModal}
             className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

@@ -291,7 +291,7 @@ const Payroll = () => {
         {payslipModal.payroll && payslipModal.employee && (
           <div className="space-y-6" id="payslip-content">
             <div className="text-center border-b pb-4">
-              <h2 className="text-xl font-bold text-gray-800">{settings.company_name || 'BEAUZEAD LTD'}</h2>
+              <h2 className="text-xl font-bold text-gray-800">{settings.company_name || ''}</h2>
               <p className="text-gray-500">Payslip for {payslipModal.payroll.month} {payslipModal.payroll.year}</p>
             </div>
 

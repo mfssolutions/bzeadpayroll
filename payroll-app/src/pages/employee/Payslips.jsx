@@ -10,7 +10,7 @@ import { useCompanySettings } from '../../hooks/useCompanySettings';
 const Payslips = () => {
   const { profile } = useAuth();
   const { settings } = useCompanySettings();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -126,7 +126,7 @@ const Payslips = () => {
         {payslipModal.payslip && (
           <div className="space-y-6" id="payslip-content">
             <div className="text-center border-b pb-4">
-              <h2 className="text-xl font-bold text-gray-800">{settings.company_name || 'BEAUZEAD LTD'}</h2>
+              <h2 className="text-xl font-bold text-gray-800">{settings.company_name || ''}</h2>
               <p className="text-gray-500">Payslip for {payslipModal.payslip.month} {payslipModal.payslip.year}</p>
             </div>
 
@@ -173,7 +173,7 @@ const Payslips = () => {
             <div className="bg-green-50 rounded-lg p-4 text-center">
               <span className="text-gray-600 text-sm">Net Salary</span>
               <p className="text-3xl font-bold text-green-700">{formatCurrency(payslipModal.payslip.net_salary)}</p>
-              <p className="text-sm text-gray-500 mt-1">Pounds {convertNumberToWords(Math.floor(Number(payslipModal.payslip.net_salary)))} Only</p>
+              <p className="text-sm text-gray-500 mt-1">{currency === 'GBP' ? 'Pounds' : 'Rupees'} {convertNumberToWords(Math.floor(Number(payslipModal.payslip.net_salary)))} Only</p>
             </div>
 
             <div className="flex justify-between text-xs text-gray-400 border-t pt-2">
