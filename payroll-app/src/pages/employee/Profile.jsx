@@ -217,7 +217,7 @@ const Profile = () => {
               ['Salary', formatCurrency(employee?.salary_amount || employee?.basic_salary)],
               ['Bank Name', employee?.bank_name || 'Not set'],
               ['Bank Account', employee?.bank_account || 'Not set'],
-              ['Sort Code', employee?.sort_code || 'Not set'],
+              ['Sort Code / IFSC / SWIFT', employee?.sort_code || 'Not set'],
               ['NI Number', employee?.ni_number || 'Not set'],
               ['Tax Code', employee?.tax_code || 'Not set'],
               ['Passport No', employee?.passport_no || 'Not set'],

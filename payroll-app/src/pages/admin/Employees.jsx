@@ -151,7 +151,7 @@ const validateField = (name, value, formData, isNew) => {
       if (value && (isNaN(Number(value)) || Number(value) < 0)) return 'Must be a positive number';
       return '';
     case 'sort_code':
-      if (value && !/^\d{2}-?\d{2}-?\d{2}$/.test(value)) return 'Sort code format: 12-34-56';
+      if (value && value.trim().length < 4) return 'Enter a valid bank routing/sort code';
       return '';
     case 'postcode':
       if (value && value.trim().length < 3) return 'Enter a valid postcode';
@@ -665,7 +665,7 @@ const Employees = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InputField formData={formData} onChange={handleChange} errors={errors} label="Bank Name" name="bank_name" maxLength={100} placeholder="e.g. Barclays" />
                 <InputField formData={formData} onChange={handleChange} errors={errors} label="Account Number" name="bank_account" maxLength={50} placeholder="12345678" />
-                <InputField formData={formData} onChange={handleChange} errors={errors} label="Sort Code" name="sort_code" maxLength={8} placeholder="12-34-56" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Sort Code / IFSC / SWIFT" name="sort_code" maxLength={20} placeholder="e.g. 12-34-56 / FDRL0002" />
               </div>
             </div>
           )}
