@@ -366,7 +366,5 @@ INSERT INTO company_settings (setting_key, setting_value, setting_type)
 VALUES ('session_timeout', '30', 'number')
 ON CONFLICT (setting_key) DO NOTHING;
 
--- #16: Note - The seed admin password (Beauzead@99) in supabase-schema.sql is
--- intentional for first-time setup. It is protected by the IF NOT EXISTS guard.
--- The comment already says "CHANGE THIS PASSWORD after first login!"
--- No code change needed; this is documented.
+-- #16: Seed admin credentials have been removed from the public schema file.
+-- The password was rotated on the live database.

@@ -533,47 +533,10 @@ ON CONFLICT (setting_key) DO NOTHING;
 
 -- ============================================================
 -- 8. SEED ADMIN USER
---    Creates the first admin so you can log in immediately.
---    Email: info@beauzead.com  |  Password: Beauzead@99
---    CHANGE THIS PASSWORD after first login!
+--    The initial admin seed has been applied and the password rotated.
+--    DO NOT commit plaintext credentials to version control.
+--    To re-seed, run the seed script locally with your own password.
 -- ============================================================
 
-DO $$
-DECLARE
-  v_uid UUID := gen_random_uuid();
-BEGIN
-  -- Only insert if no admin exists yet
-  IF NOT EXISTS (SELECT 1 FROM public.admin_users LIMIT 1) THEN
-    -- Create auth user
-    INSERT INTO auth.users (
-      instance_id, id, aud, role, email,
-      encrypted_password, email_confirmed_at,
-      raw_app_meta_data, raw_user_meta_data,
-      created_at, updated_at, confirmation_token, recovery_token
-    ) VALUES (
-      '00000000-0000-0000-0000-000000000000',
-      v_uid, 'authenticated', 'authenticated',
-      'info@beauzead.com',
-      crypt('Beauzead@99', gen_salt('bf')),
-      NOW(),
-      '{"provider":"email","providers":["email"]}'::jsonb,
-      '{"full_name":"Super Admin","role":"admin"}'::jsonb,
-      NOW(), NOW(), '', ''
-    );
-
-    INSERT INTO auth.identities (
-      id, user_id, identity_data, provider, provider_id,
-      last_sign_in_at, created_at, updated_at
-    ) VALUES (
-      v_uid, v_uid,
-      jsonb_build_object('sub', v_uid::TEXT, 'email', 'info@beauzead.com'),
-      'email', v_uid::TEXT,
-      NOW(), NOW(), NOW()
-    );
-
-    -- Create admin profile
-    INSERT INTO public.admin_users (auth_uid, username, email, full_name, role, status)
-    VALUES (v_uid, 'beauzead', 'info@beauzead.com', 'Super Admin', 'super_admin', 'active');
-  END IF;
-END;
-$$;
+-- Seed block removed from public repo for security.
+-- See README for first-time setup instructions.
