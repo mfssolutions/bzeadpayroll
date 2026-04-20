@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const EmployeeLogin = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,27 +15,7 @@ const EmployeeLogin = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      const { data: credData, error: credError } = await supabase
-        .from('employee_credentials')
-        .select('id, employee_id, employees(id, status)')
-        .eq('auth_uid', data.user.id)
-        .single();
-
-      if (credError || !credData) {
-        await supabase.auth.signOut();
-        toast.error('Not an employee account');
-        return;
-      }
-
-      if (credData.employees?.status === 'inactive') {
-        await supabase.auth.signOut();
-        toast.error('Your account is inactive. Please contact HR.');
-        return;
-      }
-
+      await signIn(email, password);
       toast.success('Login successful');
       navigate('/employee/dashboard');
     } catch (err) {
