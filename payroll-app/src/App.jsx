@@ -73,6 +73,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to={loginPath} replace />;
   }
 
+  if (user && !role) return <LoadingSpinner />;
+
   if (requiredRole && role !== requiredRole) {
     const redirectPath = role === 'admin' ? '/admin/dashboard' : '/employee/dashboard';
     return <Navigate to={redirectPath} replace />;
