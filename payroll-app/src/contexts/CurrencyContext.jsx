@@ -44,10 +44,10 @@ export const CurrencyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
+      const res = await fetch('https://v6.exchangerate-api.com/v6/616eb03f835af143d6ac3c10/latest/GBP');
       if (!res.ok) throw new Error(`Exchange rate API error: ${res.status}`);
       const data = await res.json();
-      const rate = data.rates?.INR;
+      const rate = data.conversion_rates?.INR;
       if (!rate) throw new Error('INR rate not found in response');
       setExchangeRate(rate);
       setCachedRate(rate);
