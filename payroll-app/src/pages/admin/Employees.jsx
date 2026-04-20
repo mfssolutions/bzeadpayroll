@@ -12,6 +12,67 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSPORT_REGEX = /^[A-Z0-9]{6,20}$/i;
 const PHONE_REGEX = /^\+?[\d\s\-()]{7,20}$/;
 
+// ── Reusable form components (defined outside to prevent re-mount on state change) ──
+const InputField = ({ label, name, type = 'text', required, disabled, placeholder, maxLength, formData, onChange, errors, ...rest }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      name={name}
+      value={formData[name]}
+      onChange={onChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+        errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'
+      } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+      {...rest}
+    />
+    {errors[name] && <p className="mt-1 text-xs text-red-600">{errors[name]}</p>}
+  </div>
+);
+
+const SelectField = ({ label, name, options, required, placeholder = 'Select...', formData, onChange, errors }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={formData[name]}
+      onChange={onChange}
+      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+        errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'
+      }`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((opt) =>
+        typeof opt === 'string' ? (
+          <option key={opt} value={opt}>{opt}</option>
+        ) : (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        )
+      )}
+    </select>
+    {errors[name] && <p className="mt-1 text-xs text-red-600">{errors[name]}</p>}
+  </div>
+);
+
+const SectionHeader = ({ icon, title, description }) => (
+  <div className="flex items-center gap-3 pb-3 mb-4 border-b border-gray-200">
+    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+      <i className={`fas ${icon} text-red-600`}></i>
+    </div>
+    <div>
+      <h4 className="text-base font-semibold text-gray-900">{title}</h4>
+      <p className="text-xs text-gray-500">{description}</p>
+    </div>
+  </div>
+);
+
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'];
 const SALARY_BASIS_OPTIONS = ['Hourly', 'Weekly', 'Monthly'];
 const SALARY_CYCLES = ['Last working day', '1st of month', '15th of month', '25th of month'];
@@ -377,67 +438,6 @@ const Employees = () => {
     );
   });
 
-  // ── Reusable input components ──
-  const InputField = ({ label, name, type = 'text', required, disabled, placeholder, maxLength, ...rest }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        disabled={disabled}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
-          errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-        {...rest}
-      />
-      {errors[name] && <p className="mt-1 text-xs text-red-600">{errors[name]}</p>}
-    </div>
-  );
-
-  const SelectField = ({ label, name, options, required, placeholder = 'Select...' }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <select
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
-          errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'
-        }`}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) =>
-          typeof opt === 'string' ? (
-            <option key={opt} value={opt}>{opt}</option>
-          ) : (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          )
-        )}
-      </select>
-      {errors[name] && <p className="mt-1 text-xs text-red-600">{errors[name]}</p>}
-    </div>
-  );
-
-  const SectionHeader = ({ icon, title, description }) => (
-    <div className="flex items-center gap-3 pb-3 mb-4 border-b border-gray-200">
-      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-        <i className={`fas ${icon} text-red-600`}></i>
-      </div>
-      <div>
-        <h4 className="text-base font-semibold text-gray-900">{title}</h4>
-        <p className="text-xs text-gray-500">{description}</p>
-      </div>
-    </div>
-  );
-
   // ── Loading state ──
   if (loading) {
     return (
@@ -602,12 +602,12 @@ const Employees = () => {
                 description="Employee's personal and contact information"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InputField label="First Name" name="first_name" required maxLength={100} />
-                <InputField label="Last Name" name="last_name" required maxLength={100} />
-                <InputField label="Date of Birth" name="date_of_birth" type="date" />
-                <SelectField label="Gender" name="gender" options={GENDERS} />
-                <InputField label="Phone" name="phone" type="tel" maxLength={20} placeholder="+44 7700 900000" />
-                <InputField label="Personal Email" name="personal_email" type="email" placeholder="personal@example.com" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="First Name" name="first_name" required maxLength={100} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Last Name" name="last_name" required maxLength={100} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Date of Birth" name="date_of_birth" type="date" />
+                <SelectField formData={formData} onChange={handleChange} errors={errors} label="Gender" name="gender" options={GENDERS} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Phone" name="phone" type="tel" maxLength={20} placeholder="+44 7700 900000" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Personal Email" name="personal_email" type="email" placeholder="personal@example.com" />
               </div>
 
               <div className="mt-5 mb-2">
@@ -617,15 +617,15 @@ const Employees = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 lg:col-span-3">
-                  <InputField label="Address Line 1" name="address_line1" placeholder="House number and street" maxLength={200} />
+                  <InputField formData={formData} onChange={handleChange} errors={errors} label="Address Line 1" name="address_line1" placeholder="House number and street" maxLength={200} />
                 </div>
                 <div className="sm:col-span-2 lg:col-span-3">
-                  <InputField label="Address Line 2" name="address_line2" placeholder="Apartment, suite, etc. (optional)" maxLength={200} />
+                  <InputField formData={formData} onChange={handleChange} errors={errors} label="Address Line 2" name="address_line2" placeholder="Apartment, suite, etc. (optional)" maxLength={200} />
                 </div>
-                <InputField label="City / Town" name="city" maxLength={100} />
-                <InputField label="County" name="county" maxLength={100} />
-                <InputField label="Postcode" name="postcode" maxLength={15} placeholder="e.g. SW1A 1AA / 670702" />
-                <InputField label="Country" name="country" maxLength={100} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="City / Town" name="city" maxLength={100} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="County" name="county" maxLength={100} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Postcode" name="postcode" maxLength={15} placeholder="e.g. SW1A 1AA / 670702" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Country" name="country" maxLength={100} />
               </div>
             </div>
           )}
@@ -639,9 +639,9 @@ const Employees = () => {
                 description="Department, role, salary structure and bank details"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <SelectField label="Department" name="department" options={departments} />
-                <InputField label="Designation / Job Title" name="designation" maxLength={100} />
-                <SelectField label="Employment Type" name="employment_type" options={EMPLOYMENT_TYPES} />
+                <SelectField formData={formData} onChange={handleChange} errors={errors} label="Department" name="department" options={departments} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Designation / Job Title" name="designation" maxLength={100} />
+                <SelectField formData={formData} onChange={handleChange} errors={errors} label="Employment Type" name="employment_type" options={EMPLOYMENT_TYPES} />
               </div>
 
               <div className="mt-5 mb-2">
@@ -650,10 +650,10 @@ const Employees = () => {
                 </h5>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <SelectField label="Salary Basis" name="salary_basis" options={SALARY_BASIS_OPTIONS} />
-                <InputField label="Salary Amount (£)" name="salary_amount" type="number" min="0" step="0.01" placeholder="0.00" />
+                <SelectField formData={formData} onChange={handleChange} errors={errors} label="Salary Basis" name="salary_basis" options={SALARY_BASIS_OPTIONS} />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Salary Amount (£)" name="salary_amount" type="number" min="0" step="0.01" placeholder="0.00" />
                 {formData.salary_basis === 'Monthly' && (
-                  <SelectField label="Salary Disbursal Day" name="salary_cycle" options={SALARY_CYCLES} />
+                  <SelectField formData={formData} onChange={handleChange} errors={errors} label="Salary Disbursal Day" name="salary_cycle" options={SALARY_CYCLES} />
                 )}
               </div>
 
@@ -663,9 +663,9 @@ const Employees = () => {
                 </h5>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InputField label="Bank Name" name="bank_name" maxLength={100} placeholder="e.g. Barclays" />
-                <InputField label="Account Number" name="bank_account" maxLength={50} placeholder="12345678" />
-                <InputField label="Sort Code" name="sort_code" maxLength={8} placeholder="12-34-56" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Bank Name" name="bank_name" maxLength={100} placeholder="e.g. Barclays" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Account Number" name="bank_account" maxLength={50} placeholder="12345678" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Sort Code" name="sort_code" maxLength={8} placeholder="12-34-56" />
               </div>
             </div>
           )}
@@ -679,9 +679,9 @@ const Employees = () => {
                 description="HMRC compliance details (Tax Code, NI, Starter Declaration) and login credentials"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InputField label="Date of Joining" name="joining_date" type="date" />
-                <InputField label="Passport Number" name="passport_no" maxLength={20} placeholder="e.g. 123456789" />
-                <InputField label="National Insurance (NI) Number" name="ni_number" maxLength={13} placeholder="QQ 12 34 56 A" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Date of Joining" name="joining_date" type="date" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="Passport Number" name="passport_no" maxLength={20} placeholder="e.g. 123456789" />
+                <InputField formData={formData} onChange={handleChange} errors={errors} label="National Insurance (NI) Number" name="ni_number" maxLength={13} placeholder="QQ 12 34 56 A" />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tax Code <span className="text-gray-400 text-xs">(from P45 or HMRC)</span>
