@@ -155,7 +155,7 @@ const validateField = (name, value, formData, isNew) => {
       if (value && value.trim().length < 3) return 'Enter a valid postcode';
       return '';
     case 'tax_code':
-      if (value && !/^[0-9]{1,4}[A-Z]{1,2}$|^(BR|D0|D1|NT|0T|K\d+)$/i.test(value)) return 'Enter a valid tax code (e.g. 1257L, BR, 0T)';
+      if (value && !/^[0-9]{1,4}[A-Z]{1,2}$|^(BR|D0|D1|NT|0T|K\d+)$/i.test(value)) return 'Enter a valid tax code (e.g. BR, 0T)';
       return '';
     default:
       return '';
@@ -702,12 +702,12 @@ const Employees = () => {
                     value={formData.tax_code}
                     onChange={handleChange}
                     maxLength={10}
-                    placeholder="1257L"
+                    placeholder="Enter tax code"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
                       errors.tax_code ? 'border-red-400 bg-red-50' : 'border-gray-300'
                     }`}
                   />
-                  <p className="mt-1 text-xs text-gray-400">Default: 1257L (standard personal allowance 2025/26)</p>
+                  <p className="mt-1 text-xs text-gray-400">Leave blank to use company default tax code from settings.</p>
                   {errors.tax_code && <p className="mt-1 text-xs text-red-600">{errors.tax_code}</p>}
                 </div>
                 <div>

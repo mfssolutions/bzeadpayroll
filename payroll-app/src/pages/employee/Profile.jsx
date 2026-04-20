@@ -43,7 +43,7 @@ const Profile = () => {
         city: data.city || '',
         county: data.county || '',
         postcode: data.postcode || '',
-        country: data.country || 'United Kingdom',
+        country: data.country || '',
         emergency_name: data.emergency_name || '',
         emergency_phone: data.emergency_phone || '',
       });

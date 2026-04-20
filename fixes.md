@@ -3,6 +3,8 @@
 Date: 2026-04-20 (Post Full-Fix Audit)
 Status: **ALL 15 AUDIT FINDINGS RESOLVED**
 
+Final verification sweep: completed; removed 4 residual UK hardcoded strings from employee profile/form copy.
+
 ---
 
 ## Verification Results
