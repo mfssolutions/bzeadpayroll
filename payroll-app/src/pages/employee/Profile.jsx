@@ -7,7 +7,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import toast from 'react-hot-toast';
 
 const PHONE_REGEX = /^\+?[\d\s\-()]{7,20}$/;
-const POSTCODE_REGEX = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+const POSTCODE_MIN_LENGTH = 3;
 
 const Profile = () => {
   const { user, profile } = useAuth();
@@ -60,8 +60,8 @@ const Profile = () => {
     if (editForm.phone && !PHONE_REGEX.test(editForm.phone)) {
       errors.phone = 'Enter a valid phone number';
     }
-    if (editForm.postcode && !POSTCODE_REGEX.test(editForm.postcode)) {
-      errors.postcode = 'Enter a valid UK postcode';
+    if (editForm.postcode && editForm.postcode.trim().length < POSTCODE_MIN_LENGTH) {
+      errors.postcode = 'Enter a valid postcode';
     }
     if (editForm.emergency_phone && !PHONE_REGEX.test(editForm.emergency_phone)) {
       errors.emergency_phone = 'Enter a valid phone number';
@@ -314,7 +314,7 @@ const Profile = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
               <input type="text" value={editForm.postcode} onChange={(e) => setEditForm({ ...editForm, postcode: e.target.value })}
-                placeholder="SW1A 1AA" className={inputClass('postcode')} />
+                placeholder="e.g. SW1A 1AA / 670702" className={inputClass('postcode')} />
               {editErrors.postcode && <p className="mt-1 text-xs text-red-600">{editErrors.postcode}</p>}
             </div>
             <div>

@@ -93,7 +93,7 @@ const validateField = (name, value, formData, isNew) => {
       if (value && !/^\d{2}-?\d{2}-?\d{2}$/.test(value)) return 'Sort code format: 12-34-56';
       return '';
     case 'postcode':
-      if (value && !/^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(value)) return 'Enter a valid UK postcode';
+      if (value && value.trim().length < 3) return 'Enter a valid postcode';
       return '';
     case 'tax_code':
       if (value && !/^[0-9]{1,4}[A-Z]{1,2}$|^(BR|D0|D1|NT|0T|K\d+)$/i.test(value)) return 'Enter a valid tax code (e.g. 1257L, BR, 0T)';
@@ -624,7 +624,7 @@ const Employees = () => {
                 </div>
                 <InputField label="City / Town" name="city" maxLength={100} />
                 <InputField label="County" name="county" maxLength={100} />
-                <InputField label="Postcode" name="postcode" maxLength={10} placeholder="SW1A 1AA" />
+                <InputField label="Postcode" name="postcode" maxLength={15} placeholder="e.g. SW1A 1AA / 670702" />
                 <InputField label="Country" name="country" maxLength={100} />
               </div>
             </div>
